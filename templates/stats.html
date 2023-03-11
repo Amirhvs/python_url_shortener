@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>URL Shortener Statistics</title>
+</head>
+<body>
+
+<h1>URL Shortener Statistics</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Short</th>
+      <th>Original</th>
+      <th>Clicks</th>
+      <th>Creation Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for url in urls: %}
+      <tr>
+        <th>{{ url['id'] }}</th>
+        <td>{{ url['short_url'] }}</td>
+        <td>{{ url['original_url'] }}</td>
+        <td>{{ url['clicks'] }}</td>
+        <td>{{ url['created'] }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+</body>
+</html>

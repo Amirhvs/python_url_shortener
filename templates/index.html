@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>URL Shortener</title>
+</head>
+<body>
+
+    <a href="{{ url_for('stats') }}">Statistics</a>
+    <hr>
+
+    <form action="" method="POST">
+        <label>URL: </label>
+        <input type="text" name="url" placeholder="URL to shorten" value="{{ request.form['URL'] }}" autofocus>
+        <button type="submit">Shorten URL</button>
+    </form>
+
+    {% if short_url: %}
+    <hr>
+    <span>{{ short_url }} </span>
+    {% endif %}
+</body>
+</html>
