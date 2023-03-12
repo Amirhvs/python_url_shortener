@@ -17,7 +17,7 @@ Lastly, the function returns the conn connection object you’ll be using to acc
 
 
 def get_db_connection():
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('data/database.db')
     conn.row_factory = sqlite3.Row
     return conn
 
