@@ -2,17 +2,14 @@ import sqlite3
 
 class DBConnector(object):
 
-    def __init__(self, driver, server, database, user, password):
-        self.driver = driver
-        self.server = server
+    def __init__(self, database):
         self.database = database
-        self.user = user
-        self.password = password
-        self.dbconn = None
 
-    # creats new connection
+    # creates new connection
     def create_connection(self):
-        return sqlite3.connect("/data/database.db")
+        conn = sqlite3.connect(self.database)
+        conn.row_factory = sqlite3.Row
+        return conn
 
     # For explicitly opening database connection
     def __enter__(self):
