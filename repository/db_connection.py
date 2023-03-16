@@ -61,3 +61,16 @@ class DBConnection(object):
 
             cls.execute_query(f"UPDATE urls SET clicks = '{clicks + 1}' WHERE id = '{original_id}'")
             return True, original_url
+
+    @classmethod
+    def statistics(cls):
+        """Select DB data, append to URL to visualize later in a HTML template"""
+        db_urls = cls.execute_query("SELECT id, created, original_url, clicks FROM urls")[0]
+
+        urls = []
+        for url in db_urls:
+            url = dict(url)
+            url["short_url"] = request.host_url + hashids.encode(url["id"])
+            urls.append(url)
+
+        return urls
