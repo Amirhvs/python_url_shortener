@@ -3,7 +3,6 @@ from repository import db_connector
 # import pyodbc
 from flask import request
 from hashids import Hashids
-from config import SECRET_KEY
 
 
 # Generating a hash using salt:

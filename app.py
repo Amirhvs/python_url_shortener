@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, url_for, redirect, flash
-from repository import db_connection, db_connector
+from repository import db_connection
 
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
