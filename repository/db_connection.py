@@ -1,6 +1,6 @@
 import config
 from repository import db_connector
-import pyodbc
+# import pyodbc
 from flask import request
 from hashids import Hashids
 from config import SECRET_KEY
@@ -46,3 +46,18 @@ class DBConnection(object):
         short_url = request.host_url + hashid
 
         return short_url
+
+    @classmethod
+    def url_redirect(cls, id):
+        """Decode URL, return original URL and add 1 to its clicks count"""
+        original_id = hashids.decode(id)
+
+        if original_id:
+            original_id = original_id[0]
+            url_data = cls.execute_query(f"SELECT original_url, clicks FROM urls WHERE id = ('{original_id}')")[0]
+
+            original_url = url_data[0]["original_url"]
+            clicks = url_data[0]["clicks"]
+
+            cls.execute_query(f"UPDATE urls SET clicks = '{clicks + 1}' WHERE id = '{original_id}'")
+            return True, original_url
