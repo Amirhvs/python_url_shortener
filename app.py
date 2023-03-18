@@ -1,7 +1,11 @@
+from os import error
 from flask import Flask, render_template, request, url_for, redirect, flash
 from hashids import Hashids
 import sqlite3
 import uuid
+import urllib.parse
+import validators
+import os
 
 app = Flask(__name__)
 
@@ -21,28 +25,59 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+@app.route("/url", methods=["POST"])
+def add_url():
+    url = request.json["url"]
+    if not url:
+        return "URL cannot be empty", 400
+
+    is_valid = validators.url(url)
+    if not is_valid:
+        return "URL is not valid", 400
+
+    conn = get_db_connection()
+
+    url_data = conn.execute("INSERT INTO urls (original_url) VALUES (?)", (url,))
+    conn.commit()
+    conn.close()
+
+    # handle errors
+    server_url = os.getenv('SERVER_URL')
+
+    url_id = url_data.lastrowid
+    hashid = hashids.encode(url_id)
+    short_url = f"{server_url}/{hashid}"
+
+    # return render_template("index.html", short_url=short_url)
+    return { "url": short_url }
+
+
+    
+    print(parsed_url)
+    return {"works": True}
 
 @app.route("/", methods=("GET", "POST"))
 def home():
-    conn = get_db_connection()
+    # conn = get_db_connection()
 
-    if request.method == "POST":
-        url = request.form["url"]
-        # uid = str(uuid.uuid4())[:5]
+    # if request.method == "POST":
+    #     url = request.form["url"]
+    #     # uid = str(uuid.uuid4())[:5]
 
-        if not url:
-            flash("The URL is required!")
-            return redirect(url_for("index"))
+    #     if not url:
+    #         flash("The URL is required!")
+    #         return redirect(url_for("index"))
 
-        url_data = conn.execute("INSERT INTO urls (original_url) VALUES (?)", (url,))
-        conn.commit()
-        conn.close()
+    #     url_data = conn.execute("INSERT INTO urls (original_url) VALUES (?)", (url,))
+    #     conn.commit()
+    #     conn.close()
 
-        url_id = url_data.lastrowid
-        hashid = hashids.encode(url_id)
-        short_url = request.host_url + hashid
+    #     url_id = url_data.lastrowid
+    #     hashid = hashids.encode(url_id)
+    #     short_url = request.host_url + hashid
 
-        return render_template("index.html", short_url=short_url)
+    #     # return render_template("index.html", short_url=short_url)
+    #     return { "url": short_url }
 
     return render_template("index.html")
 
