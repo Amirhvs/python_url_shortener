@@ -1,89 +1,45 @@
 from flask import Flask, render_template, request, url_for, redirect, flash
-from hashids import Hashids
-import sqlite3
-import uuid
+from repository import db_connection
 
 app = Flask(__name__)
-
-# Needed for using Hashid. Could use UUID instead? Not super sure
-app.config['SECRET_KEY'] = 'super_secret_string'
-hashids = Hashids(min_length=4, salt=app.config['SECRET_KEY'])
-
-"""The get_db_connection() function opens a connection to the database.db database file 
-and then sets the row_factory attribute to sqlite3.Row. As a result, 
-you can have name-based access to columns; 
-the database connection will return rows that behave like regular Python dictionaries.
-Lastly, the function returns the conn connection object you’ll be using to access the database."""
+app.config.from_pyfile('config.py')
 
 
-def get_db_connection():
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
-    return conn
+@app.route("/url", methods=["POST"])
+def add_url():
+    return db_connection.DBConnection.shorten_url()
 
 
-@app.route("/", methods=("GET", "POST"))
+@app.route("/", methods=["GET", "POST"])
 def home():
-    conn = get_db_connection()
-
-    if request.method == "POST":
-        url = request.form["url"]
-        # uid = str(uuid.uuid4())[:5]
-
-        if not url:
-            flash("The URL is required!")
-            return redirect(url_for("index"))
-
-        url_data = conn.execute("INSERT INTO urls (original_url) VALUES (?)", (url,))
-        conn.commit()
-        conn.close()
-
-        url_id = url_data.lastrowid
-        hashid = hashids.encode(url_id)
-        short_url = request.host_url + hashid
-
-        return render_template("index.html", short_url=short_url)
+    # if request.method == "POST":
+    #     url = request.form["url"]
+    #
+    #     if not url:
+    #         flash("The URL is required!")
+    #         return redirect(url_for("index"))
+    #
+    #     short_url = db_connection.DBConnection.shorten_url(url)
+    #
+    #     return render_template("index.html", short_url=short_url)
 
     return render_template("index.html")
 
 
 @app.route("/<id>")
-def url_redirect(id):
-    conn = get_db_connection()
-
-    original_id = hashids.decode(id)
-    # print(original_id)
-    if original_id:
-        original_id = original_id[0]
-        url_data = conn.execute("SELECT original_url, clicks FROM urls"
-                                " WHERE id = (?)", (original_id,)
-                                ).fetchone()
-        original_url = url_data["original_url"]
-        clicks = url_data["clicks"]
-
-        conn.execute("UPDATE urls SET clicks = ? WHERE id = ?",
-                     (clicks+1, original_id))
-
-        conn.commit()
-        conn.close()
-        return redirect(original_url)
+def url_redirect_page(id):
+    url_redirect_func = db_connection.DBConnection.url_redirect(id)
+    original_url = url_redirect_func[1]
+    if url_redirect_func:
+        return redirect(original_url)  # Keeps saying TypeError: 'NoneType' object is not subscriptable?
     else:
         flash("Invalid URL")
-        return redirect(url_for("home"))
+        return redirect(url_for("home"))  # Seems to be a bug. Neither flashes nor redirects on invalid URLs
 
 
 @app.route("/stats")
 def stats():
-    conn = get_db_connection()
-    db_urls = conn.execute("SELECT id, created, original_url, clicks FROM urls").fetchall()
-    conn.close()
-
-    urls = []
-    for url in db_urls:
-        url = dict(url)
-        url["short_url"] = request.host_url + hashids.encode(url["id"])
-        urls.append(url)
-
+    urls = db_connection.DBConnection.statistics()
     return render_template("stats.html", urls=urls)
 
 
