@@ -5,19 +5,23 @@ app = Flask(__name__)
 app.config.from_pyfile('config.py')
 
 
-@app.route("/", methods=("GET", "POST"))
+@app.route("/url", methods=["POST"])
+def add_url():
+    return db_connection.DBConnection.shorten_url()
+
+
+@app.route("/", methods=["GET", "POST"])
 def home():
-
-    if request.method == "POST":
-        url = request.form["url"]
-
-        if not url:
-            flash("The URL is required!")
-            return redirect(url_for("index"))
-
-        short_url = db_connection.DBConnection.shorten_url(url)
-
-        return render_template("index.html", short_url=short_url)
+    # if request.method == "POST":
+    #     url = request.form["url"]
+    #
+    #     if not url:
+    #         flash("The URL is required!")
+    #         return redirect(url_for("index"))
+    #
+    #     short_url = db_connection.DBConnection.shorten_url(url)
+    #
+    #     return render_template("index.html", short_url=short_url)
 
     return render_template("index.html")
 
@@ -30,7 +34,7 @@ def url_redirect_page(id):
         return redirect(original_url)
     else:
         flash("Invalid URL")
-        return redirect(url_for("home"))
+        return redirect(url_for("home"))  # Seems to be a bug. Neither flashes nor redirects on invalid URLs
 
 
 @app.route("/stats")

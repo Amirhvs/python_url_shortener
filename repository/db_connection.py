@@ -3,7 +3,8 @@ from repository import db_connector
 # import pyodbc
 from flask import request
 from hashids import Hashids
-
+import validators
+import os
 
 # Generating a hash using salt:
 hashids = Hashids(min_length=4, salt=config.SECRET_KEY)
@@ -36,15 +37,25 @@ class DBConnection(object):
         return result, url_id
 
     @classmethod
-    def shorten_url(cls, url):
-        """Commit original URL to database, then encode and create new short URL"""
+    def shorten_url(cls):
+        """Validate URL, Commit original URL to database, then encode and create new short URL"""
+        url = request.json["url"]
+        if not url:
+            return "URL cannot be empty", 400
+
+        is_valid = validators.url(url)
+        if not is_valid:
+            return "URL is not valid", 400
+
+        # Needs error handling? Remember that pattern can be wrong
         url_data = cls.execute_query(f"INSERT INTO urls (original_url) VALUES ('{url}')")
         url_id = url_data[1]
 
+        server_url = os.getenv("SERVER_URL")  # Handle errors?
         hashid = hashids.encode(url_id)
-        short_url = request.host_url + hashid
+        short_url = f"{server_url}/{hashid}"
 
-        return short_url
+        return {"url": short_url}
 
     @classmethod
     def url_redirect(cls, id):
