@@ -1,3 +1,5 @@
+import sqlite3
+
 import config
 from repository import db_connector
 # import pyodbc
@@ -47,15 +49,20 @@ class DBConnection(object):
         if not is_valid:
             return "URL is not valid", 400
 
-        # Needs error handling? Remember that pattern can be wrong
-        url_data = cls.execute_query(f"INSERT INTO urls (original_url) VALUES ('{url}')")
-        url_id = url_data[1]
+        # Error handling in case URL already exist in DB
+        try:
+            url_data = cls.execute_query(f"INSERT INTO urls (original_url) VALUES ('{url}')")
 
-        server_url = os.getenv("SERVER_URL")  # Handle errors?
-        hashid = hashids.encode(url_id)
-        short_url = f"{server_url}/{hashid}"
+            url_id = url_data[1]
 
-        return {"url": short_url}
+            server_url = os.getenv("SERVER_URL")  # Handle errors?
+            hashid = hashids.encode(url_id)
+            short_url = f"{server_url}/{hashid}"
+
+            return {"url": short_url}
+
+        except sqlite3.IntegrityError:
+            return "URL is already shortened", 400
 
     @classmethod
     def url_redirect(cls, id):

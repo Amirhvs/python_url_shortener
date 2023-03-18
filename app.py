@@ -31,7 +31,7 @@ def url_redirect_page(id):
     url_redirect_func = db_connection.DBConnection.url_redirect(id)
     original_url = url_redirect_func[1]
     if url_redirect_func:
-        return redirect(original_url)
+        return redirect(original_url)  # Keeps saying TypeError: 'NoneType' object is not subscriptable?
     else:
         flash("Invalid URL")
         return redirect(url_for("home"))  # Seems to be a bug. Neither flashes nor redirects on invalid URLs
