@@ -36,6 +36,7 @@ def url_redirect_page(url_hash):
     res = db_connection.DBConnection.fetch_one(f"SELECT original_url FROM urls WHERE url_hash = '{url_hash}'")
     if res:
         original_url = res[0]
+        db_connection.DBConnection.fetch_one(f"UPDATE urls SET clicks = clicks + 1 WHERE url_hash = '{url_hash}'")
         return redirect(original_url) 
     else:
         return redirect(url_for("home"))
