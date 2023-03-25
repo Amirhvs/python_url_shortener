@@ -2,7 +2,7 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,flask
 
 ### local data ###
-data/
+database.db
 
 ### Flask ###
 instance/*

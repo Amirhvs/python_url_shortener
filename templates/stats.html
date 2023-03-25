@@ -12,7 +12,7 @@
   <thead>
     <tr>
       <th>#</th>
-      <th>Short</th>
+      <th>Hash</th>
       <th>Original</th>
       <th>Clicks</th>
       <th>Creation Date</th>
@@ -22,7 +22,7 @@
     {% for url in urls: %}
       <tr>
         <th>{{ url['id'] }}</th>
-        <td>{{ url['short_url'] }}</td>
+        <td>{{ url['url_hash'] }}</td>
         <td>{{ url['original_url'] }}</td>
         <td>{{ url['clicks'] }}</td>
         <td>{{ url['created'] }}</td>

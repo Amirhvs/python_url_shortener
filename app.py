@@ -1,48 +1,58 @@
-from flask import Flask, render_template, request, url_for, redirect, flash
+from flask import Flask, render_template, request, url_for, redirect 
 from repository import db_connection
+from utils import get_hash_id 
+import os
+import validators
+from sqlite3 import IntegrityError
 
 app = Flask(__name__)
-app.config.from_pyfile('config.py')
-
+server_url = os.getenv("SERVER_URL")
 
 @app.route("/url", methods=["POST"])
 def add_url():
-    return db_connection.DBConnection.shorten_url()
+    
+    """Validate URL, Commit original URL to database, then encode and create new short URL"""
+    url = request.json["url"]
+    if not url:
+        return "URL cannot be empty", 400
 
+    is_valid = validators.url(url)
+    if not is_valid:
+        return "URL is not valid", 400
 
-@app.route("/", methods=["GET", "POST"])
-def home():
-    # if request.method == "POST":
-    #     url = request.form["url"]
-    #
-    #     if not url:
-    #         flash("The URL is required!")
-    #         return redirect(url_for("index"))
-    #
-    #     short_url = db_connection.DBConnection.shorten_url(url)
-    #
-    #     return render_template("index.html", short_url=short_url)
+    url_hash = get_hash_id()
 
-    return render_template("index.html")
+    try:
+        url_id = db_connection.DBConnection.insert_one(f"INSERT INTO urls (original_url, url_hash) VALUES ('{url}', '{url_hash}')")
+        url_data = db_connection.DBConnection.fetch_one(f"SELECT * FROM urls WHERE id = {url_id}")
 
+        return {"url": url_data["original_url"], "url_hash": url_data["url_hash"]}
 
-@app.route("/<id>")
-def url_redirect_page(id):
-    url_redirect_func = db_connection.DBConnection.url_redirect(id)
-    original_url = url_redirect_func[1]
-    if url_redirect_func:
-        return redirect(original_url)  # Keeps saying TypeError: 'NoneType' object is not subscriptable?
+    except IntegrityError:
+        return "URL is already shortened", 400
+
+@app.route("/url/<url_hash>", methods=['GET'])
+def url_redirect_page(url_hash):
+    res = db_connection.DBConnection.fetch_one(f"SELECT original_url FROM urls WHERE url_hash = '{url_hash}'")
+    if res:
+        original_url = res[0]
+        return redirect(original_url) 
     else:
-        flash("Invalid URL")
-        return redirect(url_for("home"))  # Seems to be a bug. Neither flashes nor redirects on invalid URLs
+        return redirect(url_for("home"))
 
 
-@app.route("/stats")
-def stats():
-    urls = db_connection.DBConnection.statistics()
+@app.route("/")
+def home():
+    """Select DB data, append to URL to visualize later in a HTML template"""
+    db_urls = db_connection.DBConnection.execute_query_all("SELECT id, created, original_url, url_hash, clicks FROM urls")
+
+    urls = []
+    for url in db_urls:
+        url = dict(url)
+        urls.append(url)
+
     return render_template("stats.html", urls=urls)
 
-
 if __name__ == "__main__":
-    # app.run(host="0.0.0.0", port=6000)
+    db_connection.DBConnection.run_migration() 
     app.run(host="0.0.0.0", port=8080, debug=True)

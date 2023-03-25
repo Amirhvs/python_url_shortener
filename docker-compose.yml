@@ -2,11 +2,7 @@ version: "3.9"
 services:
   web:
     build: .
-    expose:
-      - 8080
-  nginx:
-    build: ./nginx
+    volumes:
+      - './data:/python-docker/data' 
     ports:
-      - 1337:80
-    depends_on:
-      - web
+      - 8080:8080
